@@ -42,13 +42,14 @@ int main(int argc, char** argv)
     Scalar color=Scalar(255,0,0);
     for (int i=0;i<boxes.size();i++)
     {
-      if (words[i].find_first_not_of(' ') != std::string::npos)
+      if (words[i].find_first_not_of(' ') != std::string::npos && confidences[i]>70.0)
       {
         imshow("individual Boxes",gray(boxes[i]));
         rectangle(img, boxes[i].tl(), boxes[i].br(),color, 2, 8, 0 );
         namedWindow("image",WINDOW_NORMAL);
         imshow("image",img);
-        cout<<words[i]<<" ";
+        cout<<words[i]<<endl;
+        cout<<confidences[i]<<endl;
         waitKey(0);
       }
 
@@ -68,8 +69,8 @@ int main(int argc, char** argv)
     ocr.SetImage((uchar*)gray.data, gray.cols, gray.rows, 1, gray.cols);
     out = ocr.GetUTF8Text();
     cout << out << endl;*/
-    cout << output <<endl;
-    imwrite("output.jpg",img);
+    //cout << output <<endl;
+    imwrite("output2.jpg",img);
     waitKey(0);
     return 0;
 }
