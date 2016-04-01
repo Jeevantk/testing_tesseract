@@ -6,3 +6,7 @@ The objective is to
 
 
 2.Better identification of Staves .I tried using line detection for detection of staves.A major false positice in such a case is the text in between.Removal of text will eliminate such a problem and increase the accuracy of stave detection.
+
+Note 
+opencv 3 along with opencv contrib is required for compiling this 
+Also tesseract should be installed
