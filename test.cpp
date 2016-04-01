@@ -26,20 +26,33 @@ int main(int argc, char** argv)
     Mat gray;
     cvtColor(img, gray, CV_BGR2GRAY);
     Size size(img.cols*2,img.rows*2);
-    //resize(gray,gray,size);
-    imshow("resized",gray);
+    resize(img,img,size);
+    resize(gray,gray,size);
+    //namedWindow("resized",WINDOW_NORMAL);
+    //imshow("resized",gray);
     string output;
 
     vector<Rect>   boxes;
     vector<string> words;
     vector<float>  confidences;
+    //NULL,NULL,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY",3,3
     Ptr<OCRTesseract> ocr = OCRTesseract::create();
+    //ocr.char_whitelist("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
     ocr->run(gray, output, &boxes, &words, &confidences, OCR_LEVEL_WORD);
     Scalar color=Scalar(255,0,0);
     for (int i=0;i<boxes.size();i++)
     {
+      if (words[i].find_first_not_of(' ') != std::string::npos)
+      {
+        imshow("individual Boxes",gray(boxes[i]));
+        rectangle(img, boxes[i].tl(), boxes[i].br(),color, 2, 8, 0 );
+        namedWindow("image",WINDOW_NORMAL);
+        imshow("image",img);
+        cout<<words[i]<<" ";
+        waitKey(0);
+      }
 
-      rectangle(img, boxes[i].tl(), boxes[i].br(), color, 2, 8, 0 );
+      //rectangle(img, boxes[i].tl(), boxes[i].br(), color, 2, 8, 0 );
     }
     //threshold(gray,gray, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
     /*TessBaseAPI ocr;
@@ -56,7 +69,7 @@ int main(int argc, char** argv)
     out = ocr.GetUTF8Text();
     cout << out << endl;*/
     cout << output <<endl;
-    imshow("Original Image",img);
+    imwrite("output.jpg",img);
     waitKey(0);
     return 0;
 }
