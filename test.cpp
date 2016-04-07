@@ -1,13 +1,90 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
 #include <tesseract/baseapi.h>
 #include <iostream>
+#include <vector>
 #include <opencv2/text.hpp>
 
 using namespace cv;
 using namespace std;
 using namespace tesseract;
 using namespace cv::text;
+
+Mat img;
+
+int number_of_text_lines(vector<Rect> boxes,vector<float>  confidences,vector<string> words)
+{
+  int current_y_coordinate=0;
+  int no_of_lines=0;
+  for(int i=0;i<boxes.size();i++)
+  {
+    if (words[i].find_first_not_of(' ') != std::string::npos && confidences[i]>70.0)
+    {
+      if((boxes[i].y-current_y_coordinate)>boxes[i].height/2)
+      {
+        current_y_coordinate=boxes[i].y;
+        no_of_lines++;
+      }
+    }
+  }
+  return no_of_lines;
+
+}
+vector<int> y_coordinates_of_various_lines_of_text(vector<Rect> boxes,vector<float>  confidences,vector<string> words)
+{
+  vector <int> y_coordinates;
+  int current_y_coordinate=0;
+  int sorted_y_coords[boxes.size()];
+  int labels[boxes.size()];
+  /*for (int i=0;i<boxes.size();i++)
+  {
+    sorted_y_coords[i]=boxes[i].y;
+    labels[i]=i;
+  }
+
+  //Sorting the y_coordinates
+  for(int i=1;i<boxes.size();i++)
+  {
+    for (int j=0;j<=i;j++)
+    {
+      if(sorted_y_coords[j]>sorted_y_coords[i])
+      {
+        int temp=sorted_y_coords[i];
+        sorted_y_coords[i]=sorted_y_coords[j];
+        sorted_y_coords[j]=temp;
+        temp=labels[i];
+        labels[i]=labels[j];
+        labels[j]=labels[i];
+
+      }
+    }
+  }*/
+
+  for(int i=0;i<boxes.size();i++)
+  {
+    if (words[i].find_first_not_of(' ') != std::string::npos && confidences[i]>70.0)
+    {
+
+      imshow("image",img);
+      imshow("Cropped ",img(boxes[i]));
+
+      if((boxes[i].y-current_y_coordinate)>boxes[i].height)
+      {
+        y_coordinates.push_back(current_y_coordinate);
+        current_y_coordinate=boxes[i].y;
+        cout<<i<<endl;
+        //circle( img, Point(boxes[i].x,boxes[i].y), 16.0, Scalar( 0, 0, 255 ), -1, 8 );
+
+      }
+      waitKey(0);
+    }
+  }
+  y_coordinates.push_back(current_y_coordinate);
+  y_coordinates.erase (y_coordinates.begin());
+  return y_coordinates;
+
+}
 
 int main(int argc, char** argv)
 {
@@ -16,7 +93,7 @@ int main(int argc, char** argv)
         cout << "Please give the location of source sheet Music as ./test /path/to/MusicSheet" <<endl;
         return -1;
     }
-    Mat img =imread(argv[1]);
+    img =imread(argv[1]);
     if (img.empty())
     {
         cout << "No Image found found at the given location,please try again" <<endl;
@@ -25,7 +102,7 @@ int main(int argc, char** argv)
 
     Mat gray;
     cvtColor(img, gray, CV_BGR2GRAY);
-    Size size(img.cols*2,img.rows*2);
+    Size size(2200/img.rows*img.cols,2200);
     resize(img,img,size);
     resize(gray,gray,size);
     //namedWindow("resized",WINDOW_NORMAL);
@@ -50,10 +127,21 @@ int main(int argc, char** argv)
         imshow("image",img);
         cout<<words[i]<<endl;
         cout<<confidences[i]<<endl;
-        waitKey(0);
+        cout<<boxes[i].y<<endl;
+        //waitKey(0);
       }
 
+
       //rectangle(img, boxes[i].tl(), boxes[i].br(), color, 2, 8, 0 );
+    }
+    cout<<number_of_text_lines(boxes,confidences,words)<<endl;
+
+    vector<int> y_coords=y_coordinates_of_various_lines_of_text(boxes,confidences,words);
+    cout <<y_coords.size()<<endl;
+    for(int i=0;i<y_coords.size();i++)
+    {
+      cout<<y_coords[i]<<endl;
+      line(img,Point(0,y_coords[i]),Point(img.cols-1,y_coords[i]),Scalar(255,0,0),4,8,0);
     }
     //threshold(gray,gray, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
     /*TessBaseAPI ocr;
@@ -70,7 +158,10 @@ int main(int argc, char** argv)
     out = ocr.GetUTF8Text();
     cout << out << endl;*/
     //cout << output <<endl;
-    imwrite("output2.jpg",img);
+    //imwrite("output1.jpg",img);
+    //waitKey(0);
+    imshow("lines detected",img);
+    imwrite("lines.jpg",img);
     waitKey(0);
     return 0;
 }
