@@ -12,7 +12,8 @@ using namespace tesseract;
 using namespace cv::text;
 
 Mat img;
-
+//This function calculates the number of text lines in the code.The number of detected lines includes false detection also,majorly that including 'i' or 'l' from
+// This function is actually not needed anymore :P
 int number_of_text_lines(vector<Rect> boxes,vector<float>  confidences,vector<string> words)
 {
   int current_y_coordinate=0;
@@ -31,57 +32,54 @@ int number_of_text_lines(vector<Rect> boxes,vector<float>  confidences,vector<st
   return no_of_lines;
 
 }
-vector<int> y_coordinates_of_various_lines_of_text(vector<Rect> boxes,vector<float>  confidences,vector<string> words)
+vector<int> y_coordinates_of_various_lines_of_text(vector<Rect> boxes,vector<float> confidences,vector<string> words)
 {
   vector <int> y_coordinates;
   int current_y_coordinate=0;
-  int sorted_y_coords[boxes.size()];
-  int labels[boxes.size()];
-  /*for (int i=0;i<boxes.size();i++)
-  {
-    sorted_y_coords[i]=boxes[i].y;
-    labels[i]=i;
-  }
-
-  //Sorting the y_coordinates
-  for(int i=1;i<boxes.size();i++)
-  {
-    for (int j=0;j<=i;j++)
-    {
-      if(sorted_y_coords[j]>sorted_y_coords[i])
-      {
-        int temp=sorted_y_coords[i];
-        sorted_y_coords[i]=sorted_y_coords[j];
-        sorted_y_coords[j]=temp;
-        temp=labels[i];
-        labels[i]=labels[j];
-        labels[j]=labels[i];
-
-      }
-    }
-  }*/
-
+  //int sorted_y_coords[boxes.size()];
+  //int labels[boxes.size()];
+  string newword="";
   for(int i=0;i<boxes.size();i++)
   {
     if (words[i].find_first_not_of(' ') != std::string::npos && confidences[i]>70.0)
     {
 
-      imshow("image",img);
-      imshow("Cropped ",img(boxes[i]));
+      //imshow("image",img);
+      //imshow("Cropped ",img(boxes[i]));
 
       if((boxes[i].y-current_y_coordinate)>boxes[i].height)
       {
+        int flag=0;
+        if (newword.length()<3)flag=1;
+        int count=0;
+        for(int j=0;j<newword.length();j++)
+        {
+          if(newword[j]!='i'&&newword[j]!='I'&&newword[j]!='l'&&newword[j]!='L'&&newword[j]!='1')
+          {
+            count++;
+          }
+        }
+        if (count<3)flag=1;
+
         y_coordinates.push_back(current_y_coordinate);
         current_y_coordinate=boxes[i].y;
-        cout<<i<<endl;
+        //cout<<i<<endl;
+        if (flag==1)
+        {
+          //cout <<newword<<endl;
+          y_coordinates.pop_back();
+        }
         //circle( img, Point(boxes[i].x,boxes[i].y), 16.0, Scalar( 0, 0, 255 ), -1, 8 );
-
+        cout<<newword<<endl;
+        newword="";
       }
-      waitKey(0);
+      newword=newword+words[i];
+      //cout<<words[i]<<" ";
+      //waitKey(0);
     }
   }
   y_coordinates.push_back(current_y_coordinate);
-  y_coordinates.erase (y_coordinates.begin());
+  //y_coordinates.erase (y_coordinates.begin());
   return y_coordinates;
 
 }
@@ -112,6 +110,7 @@ int main(int argc, char** argv)
     vector<Rect>   boxes;
     vector<string> words;
     vector<float>  confidences;
+
     //NULL,NULL,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY",3,3
     Ptr<OCRTesseract> ocr = OCRTesseract::create();
     //ocr.char_whitelist("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -121,26 +120,27 @@ int main(int argc, char** argv)
     {
       if (words[i].find_first_not_of(' ') != std::string::npos && confidences[i]>70.0)
       {
-        imshow("individual Boxes",gray(boxes[i]));
+        //imshow("individual Boxes",gray(boxes[i]));
         rectangle(img, boxes[i].tl(), boxes[i].br(),color, 2, 8, 0 );
-        namedWindow("image",WINDOW_NORMAL);
-        imshow("image",img);
-        cout<<words[i]<<endl;
-        cout<<confidences[i]<<endl;
-        cout<<boxes[i].y<<endl;
+        //namedWindow("image",WINDOW_NORMAL);
+        //imshow("image",img);
+        //cout<<words[i]<<endl;
+        //cout<<confidences[i]<<endl;
+        //cout<<boxes[i].y<<endl;
         //waitKey(0);
       }
 
 
       //rectangle(img, boxes[i].tl(), boxes[i].br(), color, 2, 8, 0 );
     }
-    cout<<number_of_text_lines(boxes,confidences,words)<<endl;
+    //cout<<number_of_text_lines(boxes,confidences,words)<<endl;
 
     vector<int> y_coords=y_coordinates_of_various_lines_of_text(boxes,confidences,words);
-    cout <<y_coords.size()<<endl;
+    cout <<"Number of lines of text detected is "<<y_coords.size()<<endl;
+    //cout <<y_coords.size()<<endl;
     for(int i=0;i<y_coords.size();i++)
     {
-      cout<<y_coords[i]<<endl;
+      //cout<<y_coords[i]<<endl;
       line(img,Point(0,y_coords[i]),Point(img.cols-1,y_coords[i]),Scalar(255,0,0),4,8,0);
     }
     //threshold(gray,gray, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
@@ -160,6 +160,7 @@ int main(int argc, char** argv)
     //cout << output <<endl;
     //imwrite("output1.jpg",img);
     //waitKey(0);
+    namedWindow("lines detected",CV_WINDOW_NORMAL);
     imshow("lines detected",img);
     imwrite("lines.jpg",img);
     waitKey(0);
